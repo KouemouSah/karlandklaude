@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15
+    container_name: db-karlandklaude
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - ./postgresql:/var/lib/postgresql/data
+    networks:
+      - odoo_net
+
+  odoo:
+    image: odoo:17
+    container_name: odoo17-karlandklaude
+    depends_on:
+      - db
+    env_file: .env
+    ports:
+      - "${ODOO_PORT}:8069"
+      - "${ODOO_LONGPOLLING_PORT}:8072"
+    volumes:
+      - ./addons:/mnt/odoo/addons
+      - ./extra-addons:/mnt/extra-addons
+    command: >
+      bash -c "
+        echo '⏳ Attente de PostgreSQL...';
+        while ! pg_isready -h db -p 5432 -U ${POSTGRES_USER}; do sleep 2; done;
+        echo '✅ PostgreSQL est prêt, lancement de Odoo.';
+        /entrypoint.sh odoo
+      "
+    networks:
+      - odoo_net
+      - proxy_net
+
+networks:
+  odoo_net:
+  proxy_net:
+    external: true
