@@ -1,3 +1,10 @@
+# 1. Cloner uniquement la branche 'setup' du dépôt
+#git clone --branch setup https://github.com/KouemouSaH/karlandklaude.git /opt/docker-apps/setup-docker
+# 2. Se déplacer dans le dossier contenant le script
+#cd /opt/docker-apps/setup-docker/Setup_auto
+# 3. Lancer le script d'installation de Docker
+#bash install_docker.sh
+
 #!/bin/bash
 
 set -e
