@@ -8,28 +8,46 @@ services:
     env_file: .env
     volumes:
       - ./postgresql:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
     networks:
       - odoo_net
 
   odoo:
-    image: odoo:17
+    image: odoo:${ODOO_VERSION}
     container_name: odoo17-karlandklaude
     depends_on:
       - db
     env_file: .env
+    # Exposition côté hôte (utile pour test direct par IP:8071)
     ports:
       - "${ODOO_PORT}:8069"
+      # Optionnel : exposer aussi le longpolling vers l'hôte
       - "${ODOO_LONGPOLLING_PORT}:8072"
     volumes:
       - ./addons:/mnt/odoo/addons
       - ./extra-addons:/mnt/extra-addons
+    # Attente de PostgreSQL + passage des paramètres Odoo en arguments
     command: >
       bash -c "
         echo '⏳ Attente de PostgreSQL...';
-        while ! pg_isready -h db -p 5432 -U ${POSTGRES_USER}; do sleep 2; done;
+        until pg_isready -h db -p ${POSTGRES_PORT} -U ${POSTGRES_USER}; do sleep 2; done;
         echo '✅ PostgreSQL est prêt, lancement de Odoo.';
         /entrypoint.sh odoo
+          --db_host=db
+          --db_port=${POSTGRES_PORT}
+          --db_user=${POSTGRES_USER}
+          --db_password=${POSTGRES_PASSWORD}
+          --db-filter='${ODOO_DB_FILTER}'
+          --proxy-mode
+          --http-interface=${ODOO_HTTP_INTERFACE}
+          --longpolling-port=${ODOO_LONGPOLLING_PORT}
+          --admin-passwd='${ODOO_MASTER_PASSWORD}'
       "
+    restart: unless-stopped
     networks:
       - odoo_net
       - proxy_net
