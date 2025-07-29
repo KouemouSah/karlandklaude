@@ -1,4 +1,3 @@
-cat > /root/reset_to_fresh.sh <<'EOF'
 #!/bin/bash
 set -euo pipefail
 GREEN='\033[0;32m'; RED='\033[0;31m'; NC='\033[0m'
@@ -29,5 +28,3 @@ docker system prune -af --volumes >/dev/null 2>&1 || true
 success "Prune terminé"
 
 echo -e "\n${GREEN}✅ Remise à zéro terminée. Le dépôt /opt/docker-apps/setup-docker est conservé.${NC}"
-EOF
-chmod +x /root/reset_to_fresh.sh
